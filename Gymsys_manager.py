@@ -1,5 +1,7 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
+qntd_maquinas = [1, 1, 1, 1, 1, 1, 2, 3, 3, 5]
 #retorna um array de 10 inteiros entre 0 e 9 representando um treino
 def gerar_treino():
     rng = np.random.default_rng()
@@ -18,7 +20,7 @@ def gerar_aluno():
 #retorna um array de 60 a 130 treinos, representando a quantidade variável de alunos
 def gerar_alunos():
     rng = np.random.default_rng()
-    qntd_alunos = rng.integers(low=10, high=20, endpoint=True)
+    qntd_alunos = rng.integers(low=90, high=130, endpoint=True)
     alunos = []
     for x in range(qntd_alunos):
         alunos.append(gerar_aluno())
@@ -64,29 +66,49 @@ def bad_rng_check(treino):
 def gerar_horarios():
     rng = np.random.default_rng()
     disponibilidade = rng.integers(low=1, high=6, endpoint=True)
-    horarios = rng.choice(['h12', 'h13', 'h14', 'h15', 'h16', 'h17'], disponibilidade, replace=False)
+    horarios = rng.choice([12, 13, 14, 15, 16, 17], disponibilidade, replace=False)
     return horarios
 
 #calcula o número de colisões em um array de treinos usando comparar_treino2(), retorna um array com as colisões para cada elemento
 def calcular_colisões(treinos):
     colisoes = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     for x in range(len(treinos)):
-        print("tamanho:")
-        print(len(treinos))
         treino_testado = treinos[x][1]
         treinos_testado = treinos.copy()
         treinos_testado.pop(x)
-        print(x)
         for y in range(len(treinos_testado)):
             colisoes = np.add(colisoes, (comparar_treino2(treino_testado, treinos_testado[y][1])))
-            print(colisoes)
     return colisoes
+
+def nota_fitness(treinos):
+    fitness_total = 0
+    treinos_sem_descarte = treinos.copy()
+    descarte = treinos_sem_descarte.pop(len(treinos_sem_descarte)-1)
+    for x in range(6):
+        colisoes = calcular_colisões(treinos_sem_descarte[x])
+        maqs_quadrado = np.square(qntd_maquinas)
+        array_resultado = colisoes/maqs_quadrado
+        fitness_total += np.sum(array_resultado)
+    fitness_total += (descarte*1000)
+    return fitness_total
+
 
 #Testes:
 
-alunos = gerar_alunos()
-resultado = calcular_colisões(alunos)
-print(resultado)
+#fitness = []
+#for x in range(5000):
+    #alunos = []
+    #for y in range(6):
+        #alunos.append(gerar_alunos())
+    #alunos.append(0)
+    #fitness.append(nota_fitness(alunos))
+#fitness_sorted = np.sort(fitness)
+#plt.plot(fitness_sorted)
+#plt.ylabel('resultados fitness')
+#plt.show()
+#print(fitness_sorted)
+
+
 #treinoTeste1 = gerar_treino()
 #treinoTeste2 = gerar_treino()
 #print(treinoTeste1)
