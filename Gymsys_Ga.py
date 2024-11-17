@@ -3,16 +3,16 @@ import numpy as np
 from Gymsys_manager import *
 import matplotlib.pyplot as plt
 
-# Define the problem-specific fitness function
-def fitness_function(individual):
-    total_fitness = nota_fitness(individual)
-    return total_fitness
+# Define a função fitness do algoritmo genético
+def funcao_fitness(individual):
+    fitness = nota_fitness(individual)
+    return fitness
 
-# Create an individual, which consists of 6 genes
-def create_individual(value_range):
-    print(len(value_range))
+# Cria um indivíduo, composto por 7 genes (6 horarios(lista) e qntd de descartes(int))
+def create_individual(espaco_solucao):
+    print(len(espaco_solucao))
     x = 0
-    copia_range = value_range.copy()
+    copia_range = espaco_solucao.copy()
     individuo = [[], [], [], [], [], [], 0]
     for _ in range(len(copia_range)):
         x = x + 1
@@ -41,66 +41,120 @@ def create_individual(value_range):
                         aluno_nao_processado = False                         
     return individuo
 
-#NÃO IMPLEMENTADO
-# Crossover two individuals to create a child
-def crossover(parent1, parent2):
-    # Perform a crossover between the two parents at the gene level
-    crossover_point = random.randint(1, len(parent1) - 1)  # Crossover at the gene level
-    child1 = parent1[:crossover_point] + parent2[crossover_point:]
-    child2 = parent2[:crossover_point] + parent1[crossover_point:]
-    return child1, child2
+# Realiza o crossover de forma entrelaçada entre 2 solucoes para gerar 2 novas solucoes
+#
+#                       Crossover entrelaçado: 
+#                       -Distribuimos o aluno no filho1 com base em sua posição no parente1
+#                       -Distribuimos o aluno no filho2 com base em sua posicao no parente2
+#
+#                       Para o próximo aluno fazemos o oposto:
+#                       -Distribuimos o aluno no filho1 com base em sua posição no parente2
+#                       -Distribuimos o aluno no filho2 com base em sua posicao no parente1
+#                       e assim por diante até todos os alunos serem processados.
+def crossover_entrelacado(parente1, parente2, espaco_solucao):
+    copia_espaco_solucao = espaco_solucao.copy()
+    filho1 = [[], [], [], [], [], [], 0]
+    filho2 = [[], [], [], [], [], [], 0]
+    for x in range(len(copia_espaco_solucao)):
+        aluno = copia_espaco_solucao.pop(0)
+        index_aluno_em_parente1 = encontrar_aluno_solucao(aluno, parente1)
+        index_aluno_em_parente2 = encontrar_aluno_solucao(aluno, parente2)
+        if(x % 2 == 0):
+            filho1 = anexar_aluno(index_aluno_em_parente1, aluno, filho1)
+            filho2 = anexar_aluno(index_aluno_em_parente2, aluno, filho2)
+        else:
+            filho2 = anexar_aluno(index_aluno_em_parente1, aluno, filho1)
+            filho1 = anexar_aluno(index_aluno_em_parente2, aluno, filho2)
+    return filho1, filho2
 
-#NÃO IMPLEMENTADO
-# Mutate an individual by modifying one of its genes
-def mutate(individual, mutation_rate, value_range):
-    if random.random() < mutation_rate:
-        gene_index = random.randint(0, len(individual) - 1)  # Randomly pick a gene to mutate
-        individual[gene_index] = create_gene(len(individual[gene_index]), value_range)
+def crossover_um_ponto(parente1, parente2, espaco_solucao):
+    copia_espaco_solucao = espaco_solucao.copy()
+    filho1 = [[], [], [], [], [], [], 0]
+    filho2 = [[], [], [], [], [], [], 0]
+    index_meio_espaco_solucao = len(copia_espaco_solucao)/2
+    for x in range(len(copia_espaco_solucao)):
+        aluno = copia_espaco_solucao.pop(0)
+        index_aluno_em_parente1 = encontrar_aluno_solucao(aluno, parente1)
+        index_aluno_em_parente2 = encontrar_aluno_solucao(aluno, parente2)
+        if (x < index_meio_espaco_solucao):
+            filho1 = anexar_aluno(index_aluno_em_parente1, aluno, filho1)
+            filho2 = anexar_aluno(index_aluno_em_parente2, aluno, filho2)
+        else:
+            filho2 = anexar_aluno(index_aluno_em_parente1, aluno, filho1)
+            filho1 = anexar_aluno(index_aluno_em_parente2, aluno, filho2)
+    return filho1, filho2
+
+# Realiza a mutação em uma solução selecionando um aluno aleatório e trocando sua posição
+# com outro aluno aleatório que seja compatível (ambos tem o horário do outro como disponível e estão em horários diferentes)
+def mutacao(individual, taxa_mutacao):
+    if random.random() < taxa_mutacao:
+        index_aluno1 = index_aluno_aleatorio(individual)
+        aluno1 = individual[index_aluno1[0]][index_aluno1[1]]
+        index_aluno2 = index_aluno_aleatorio(individual)
+        aluno2 = individual[index_aluno2[0]][index_aluno2[1]]
+        #testamos separadamente se o aluno1 tem disponibilidade em mais de 1 horário pois este é o único caso
+        #que não pode ser tratado gerando um novo aluno2
+        while (len(aluno1[0]) == 1):
+            index_aluno1 = index_aluno_aleatorio(individual)
+            aluno1 = individual[index_aluno1[0]][index_aluno1[1]]
+        fator_break = 0
+        #Não é necessário testar se os alunos são iguais pois neste caso eles teriam o mesmo index na solucao
+        while (not alunos_trocaveis(aluno1, index_aluno1[0], aluno2, index_aluno2[0])):
+            index_aluno2 = index_aluno_aleatorio(individual)
+            aluno2 = individual[index_aluno2[0]][index_aluno2[1]]
+            #Utilizamos o fator_break para tratar o extremamente improvável caso de não existir aluno trocável com o aluno1
+            fator_break += 1
+            if(fator_break > 100):
+                return mutacao(individual, 1)
+        #Aqui é realizada a troca
+        individual[index_aluno1[0][index_aluno1[1]]] = aluno2
+        individual[index_aluno2[0][index_aluno2[1]]] = aluno1
     return individual
 
+
 #NÃO IMPLEMENTADO
-# Tournament selection of two individuals
-def select_parents(population):
+# Realiza a seleçao torneio de 2 indivíduos
+def selecao_torneio(populacao):
     tournament_size = 3
     tournament = random.sample(population, tournament_size)
-    tournament.sort(key=lambda x: fitness_function(x), reverse=True)
+    tournament.sort(key=lambda x: funcao_fitness(x), reverse=True)
     return tournament[0], tournament[1]
 
 #NÃO IMPLEMENTADO
 # Genetic algorithm to evolve a population of individuals
-def genetic_algorithm(num_generations, population_size, value_range, mutation_rate):
+def genetic_algorithm(num_generacoes, tam_populacao, espaco_solucao, taxa_mutacao):
     # Initialize population
-    population = [create_individual(value_range) for _ in range(population_size)]
+    population = [create_individual(espaco_solucao) for _ in range(tam_populacao)]
     
-    for generation in range(num_generations):
+    for generation in range(num_generacoes):
         # Evaluate fitness of the population
-        population.sort(key=lambda x: fitness_function(x), reverse=True)
+        population.sort(key=lambda x: funcao_fitness(x), reverse=True)
         best_individual = population[0]
-        print(f"Generation {generation}: Best Fitness = {fitness_function(best_individual)}")
+        print(f"Generation {generation}: Best Fitness = {funcao_fitness(best_individual)}")
         
         # Create new population through crossover and mutation
         new_population = []
         
-        while len(new_population) < population_size:
+        while (len(new_population) < tam_populacao):
             parent1, parent2 = select_parents(population)
             child1, child2 = crossover(parent1, parent2)
-            new_population.append(mutate(child1, mutation_rate, value_range))
-            if len(new_population) < population_size:
-                new_population.append(mutate(child2, mutation_rate, value_range))
+            new_population.append(mutacao(child1, taxa_mutacao))
+            if (len(new_population) < tam_populacao):
+                new_population.append(mutacao(child2, taxa_mutacao))
         
         population = new_population
 
     # Return the best individual found
-    best_individual = min(population, key=lambda x: fitness_function(x))
+    best_individual = min(population, key=lambda x: funcao_fitness(x))
     return best_individual
 
-# Parameters
-num_generations = 100
-population_size = 50
-value_range = gerar_alunos()  # Possible values for the tuples
-mutation_rate = 0.1
+# Parametros
+num_generacoes = 100
+tam_populacao = 50
+espaco_solucao = gerar_alunos()  # Possible values for the tuples
+taxa_mutacao = 0.1
 
-# Run the genetic algorithm
+# Roda o algoritmo genético:
 #best_individual = genetic_algorithm(num_generations, population_size, value_range, mutation_rate)
 #print(f"Best Individual: {best_individual}")
 #print(f"Best Fitness: {fitness_function(best_individual)}")
@@ -108,8 +162,8 @@ mutation_rate = 0.1
 #testes:
 array_fitness = []
 for x in range(5000):
-     individuo = create_individual(value_range)
-     array_fitness.append(fitness_function(individuo))
+     individuo = create_individual(espaco_solucao)
+     array_fitness.append(funcao_fitness(individuo))
 array_fitness_sorted = np.sort(array_fitness)
 
 plt.plot(array_fitness_sorted)

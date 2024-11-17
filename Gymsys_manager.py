@@ -62,6 +62,30 @@ def bad_rng_check(treino):
             return True
     return False
 
+#não testado
+#retorna um array contendo o horário em que está alocado e seu index neste horário de um aluno aleatório de um individuo ([horario, index])
+def index_aluno_aleatorio(individuo):
+    index_aluno = []
+    rng = np.random.default_rng()
+    index_horario = rng.integers(low=0, high=6)
+    if(len(individuo[index_horario]) > 0):
+        index_aluno_no_horario =rng.integers(low=0, high=len(individuo[index_horario]))  # Randomly pick a gene to mutate
+        index_aluno.append(index_horario)
+        index_aluno.append(index_aluno_no_horario)
+    else:
+        index_aluno = index_aluno_aleatorio(individuo)
+    return index_aluno
+
+#não testado
+#retorna uma boolean dizendo se 2 alunos são trocáveis (estão em 2 horários diferentes em que ambos tem disponibilidade)
+def alunos_trocaveis(aluno1, index_aluno1, aluno2, index_aluno2):
+    horarios_aluno1 = aluno1[0]
+    horarios_aluno2 = aluno2[0]
+    horarios_comuns = [x for x in horarios_aluno1 if x in horarios_aluno2]
+    if (index_aluno1[0] != index_aluno2[0] and (index_aluno1[0] in horarios_comuns) and (index_aluno2[0] in horarios_comuns)):
+        return True
+    return False
+
 #retorna um array de horários para representar a disponibilidade de um aluno, o aluno estará disponível em pelo menos um horário
 def gerar_horarios():
     rng = np.random.default_rng()
@@ -92,7 +116,28 @@ def nota_fitness(treinos):
     fitness_total += (descarte*1000)
     return fitness_total
 
+def encontrar_aluno_horario(aluno, horario):
+    try:
+        index_horario = horario.index(aluno)
+        return index_horario
+    except ValueError:
+        return None
 
+def encontrar_aluno_solucao(aluno, solucao):
+    index_horario = None
+    for x in range(6):
+        if (index_horario == None):
+            index_horario = encontrar_aluno_horario(aluno, solucao[x])
+    return index_horario
+
+def anexar_aluno(index_horario, aluno, solucao):
+    if (index_horario == None):
+        solucao[6] += 1
+    elif(len(solucao[index_horario]) < 20):
+        solucao[index_horario].append(aluno)
+    else:
+        solucao[6] += 1
+    return solucao
 #Testes:
 
 #fitness = []
