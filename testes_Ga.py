@@ -18,8 +18,8 @@ def teste_algoritmo_genetico():
 
 # Crossover um ponto:
 def teste_crossover_um_ponto():
-    solucao1 = create_individual(espaco_solucao)
-    solucao2 = create_individual(espaco_solucao)
+    solucao1 = criar_individuo(espaco_solucao)
+    solucao2 = criar_individuo(espaco_solucao)
     imprimir(solucao1)
     print()
     imprimir(solucao2)
