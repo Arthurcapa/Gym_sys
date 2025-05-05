@@ -85,11 +85,8 @@ def treino(aluno, id, maquinas, shared_data, canvas):
     """
     Função que simula a realização de um treino por um aluno
     """
-
     tempo_treinando = calcular_tempo_treino(aluno) # Calculate the total training time for the student
     print(f"Treino do aluno {id}: {aluno[1]}")
-    relatorio = []
-    relatorio.append(f"Treino do aluno {id}: {aluno[1]}")
 
     try:
         print(f"O aluno {id} veio treinar!")
@@ -99,11 +96,7 @@ def treino(aluno, id, maquinas, shared_data, canvas):
                 break  # Exit the loop if the list is empty
             semaphore = maquinas[aluno[1][0]]  # Get the semaphore for the machine the student wants to use
             index = aluno[1][0]  # Get the index of the machine the student wants to use
-            relatorio.append(f"aluno: {id} aluno[1][i]: {aluno[1][0]}")
-            relatorio.append(f"Máquina {index} - Tempo de espera: {tempo_maquinas[index]} segundos")
-            relatorio.append(f"O aluno {id} está tentando usar a máquina {index}")
             if semaphore.acquire(id):  # Pass thread id to acquire
-                relatorio.append(f"O aluno {id} está treinando na máquina {index} por {tempo_maquinas[index]} segundos!")
                 # Simulate some work being done
                 time.sleep(tempo_maquinas[index])  # Simulate the time taken to train
                 semaphore.release()
@@ -114,7 +107,6 @@ def treino(aluno, id, maquinas, shared_data, canvas):
                 aluno[1].append(aluno[1][0])  # Re-add the machine to the list of machines used by the student
                 aluno[1].pop(0)  # Remove the machine from the list of machines used by the student
         print(f"O aluno {id} terminou de treinar!")
-        print(relatorio)
         tempo_final = time.time()  # Record the end time
         print(f"Tempo inicial do aluno {id}: {tempo_inicial} ms")
         print(f"Tempo final do aluno {id}: {tempo_final} ms")

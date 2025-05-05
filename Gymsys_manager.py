@@ -55,73 +55,6 @@ def gerar_alunos():
     return alunos
 
 
-def comparar_treino_recomendacao(treino1, treino2):
-    """
-    Retorna uma lista com o número de colisões de máquina entre dois treinos, 
-    cada posição da lista representa a máquina do seu dígito.
-
-    A comparação é feita verificando se os elementos de `treino1` e `treino2` se repetem.
-    Esta função é usada para calcular a nota de recomendação de um horário para um aluno.	
-
-    Args:
-        treino1 (list): O primeiro treino a ser comparado.
-        treino2 (list): O segundo treino a ser comparado.
-
-    Returns:
-        list: Lista com o número de colisões de máquina em cada posição (máquina).
-    """
-    resultado = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    for x in range(10):
-        for y in range(10):
-            if(treino1[x] == treino2[y]):
-                resultado[treino1[x]] +=1
-    return resultado
-
-
-def comparar_treino(treino1, treino2):
-    """
-    Retorna uma lista com o número de colisões de máquina entre dois treinos, 
-    pulando elementos duplicados do primeiro treino.
-
-    A comparação é feita entre `treino1` (sem valores duplicados) e `treino2`.
-
-    Args:
-        treino1 (list): O primeiro treino a ser comparado, sem elementos duplicados.
-        treino2 (list): O segundo treino a ser comparado.
-
-    Returns:
-        list: Lista com o número de colisões de máquina em cada posição (máquina).
-    """
-    resultado = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    treino_sem_dupes = list(set(treino1))
-    for x in range(len(treino_sem_dupes)):
-        for y in range(10):
-            if(treino_sem_dupes[x] == treino2[y]):
-                resultado[treino_sem_dupes[x]] +=1
-    return resultado
-
-
-def nota_recomendacao(treinos_horario, treino_aluno):
-    """
-    Analisa o treino quando comparado aos outros alunos do horário para dar uma nota.
-
-    A função compara o `treino_aluno` com os treinos de outros alunos no mesmo horário e soma as colisões.
-
-    Args:
-        treinos_horario (list): Lista de treinos dos alunos no mesmo horário.
-        treino_aluno (list): O treino do aluno que está sendo comparado.
-
-    Returns:
-        int: A nota de recomendação baseada nas colisões de máquinas.
-    """
-    nota = 0
-    tam = len(treinos_horario)
-    for x in range(tam):
-        comparacao = comparar_treino_recomendacao(treinos_horario[x], treino_aluno)
-        nota += np.sum(comparacao)
-    return nota
-
-
 def bad_rng_check(treino):
     """
     Recebe um treino e retorna True quando alguma máquina aparece no treino mais de 3 vezes.
@@ -134,6 +67,7 @@ def bad_rng_check(treino):
     Returns:
         bool: Retorna True se algum número no treino aparecer mais de 3 vezes, False caso contrário.
     """
+    treino = np.array(treino)
     for x in range(10):
         indexes = len(np.where(treino == x)[0])
         if (indexes > 3):
@@ -198,34 +132,6 @@ def gerar_horarios():
     horarios = rng.choice([12, 13, 14, 15, 16, 17], disponibilidade, replace=False)
     horarios = horarios.tolist()
     return horarios
-
-
-def calcular_colisões(treinos):
-    """
-    Calcula o número de colisões em uma lista de alunos usando `comparar_treino()`.
-
-    A função compara o treino de cada aluno com os outros e retorna uma lista com as colisões para cada máquina.
-
-    Uma especificidade da implementação é de no loop onde um aluno x é comparado com todos os outros o aluno x será tratado como se tivesse cada
-    máquina no máximo uma vez em seu treino, ou seja, se uma máquina aparecer 2 vezes em seu treino ele será tratado como se fosse 1 em seu loop.
-    Isto ocorre pois um aluno não compete consigo mesmo por uma máquina. Quando outros alunos forem comparados com o aluno x em
-    seus respectivos loops o aluno x será processado normalmente.
-
-
-    Args:
-        treinos (list): Lista de treinos dos alunos.
-
-    Returns:
-        list: Lista com o número de colisões para cada máquina.
-    """
-    colisoes = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    for x in range(len(treinos)):
-        treino_testado = treinos[x][1]
-        treinos_testado = treinos.copy()
-        treinos_testado.pop(x)
-        for y in range(len(treinos_testado)):
-            colisoes = np.add(colisoes, (comparar_treino(treino_testado, treinos_testado[y][1])))
-    return colisoes
 
 
 def encontrar_aluno_horario(aluno, horario):
@@ -320,22 +226,3 @@ def repescagem(individuo, repescagem):
                      if(len(horarios_possiveis) == 0):
                         individuo[6] += 1
                         aluno_nao_processado = False
-
-
-def imprimir(individuo):
-    """
-    Método auxiliar usado para imprimir um indivíduo.
-
-    A função imprime as listas em um indivíduo, mostrando os alunos agendados para cada horário.
-
-    Args:
-        individuo (list): O individuo.
-
-    """
-    for horario, elem in enumerate(individuo):
-        if (type(elem) == list):
-            print(f'Alunos agendados às {(horario + 12)}h: ')
-            imprimir(elem)
-        else:
-            print(elem)
-    print()

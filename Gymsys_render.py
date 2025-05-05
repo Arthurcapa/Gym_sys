@@ -3,6 +3,8 @@ import tkinter as tk
 from Gymsys_manager import *
 from Gymsys_Ga import *
 
+corner_label_id = None
+
 class VisualSemaphore:
     def __init__(self, canvas, x, y, width=50, height=20, max_permits=1, machine_id=0):
         self.canvas = canvas
@@ -123,8 +125,6 @@ def update_canvas_size(maquinas, canvas):
             machine.canvas.coords(machine.labels[i], 
                                   machine.x + (i * (machine.width + 5)) + machine.width / 2, 
                                   machine.y + machine.height + 25)
-
-corner_label_id = None
 
 def update_corner_label(canvas, variable_value):
     global corner_label_id

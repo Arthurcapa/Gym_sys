@@ -9,9 +9,11 @@ def funcao_fitness(individuo):
     """
     Calcula a fitness de um indivíduo no algoritmo genético.
 
-    Aplica a fórmula C/M² para cada máquina em cada horário, onde C é o número de colisões
-    e M é a quantidade de instâncias de uma máquina. Depois, aplica uma penalidade para cada aluno
-    que precisou ser descartado durante o processo de agendamento.
+    A fitness é calculada com base na número de usos de máquinas em cada horário.
+    Quanto mais uniforme a distribuição de máquinas entre os horários, melhor a fitness.
+    O número de alunos descartados também é considerado na fitness, onde a quantidade de alunos
+    descartados aplica uma penalidade exponencial ao valor de fitness.
+    Para esta implementação, quanto menor o valor de fitness, melhor a solução.
 
     Parâmetros:
         individuo (list): Representação de um indivíduo (solução de agendamento).
@@ -20,15 +22,18 @@ def funcao_fitness(individuo):
         float: A nota fitness do indivíduo.
     """
     fitness = 0
-    individuo_sem_descarte = individuo.copy()
-    descarte = individuo_sem_descarte.pop(len(individuo_sem_descarte)-1)
+    fitness_horario = [0, 0, 0, 0, 0, 0]
     for x in range(6):
-        colisoes = calcular_colisões(individuo_sem_descarte[x])
-        maqs_quadrado = np.square(qntd_maquinas)
-        lista_resultado = colisoes/maqs_quadrado
-        fitness += np.sum(lista_resultado)
-    fitness += (descarte * peso_descarte)
-    return fitness
+        contagem = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        for aluno in individuo[x]:
+            for i in (range(len(aluno[1]))):
+                contagem[aluno[1][i]] += 1
+        for i in range(len(contagem)):
+            contagem[i] = 2**contagem[i]
+        fitness_horario[x] = sum(contagem)
+    fitness += sum(fitness_horario)
+    fitness += (8**individuo[6])
+    return (fitness/1000000)
 
 def criar_individuo(espaco_solucao):
     """
@@ -196,7 +201,7 @@ def selecao_rank(populacao, num_pais):
     fitness_scores = [funcao_fitness(ind) for ind in populacao]
 
     # Obtém os índices que ordenam os indivíduos por fitness (do maior para o menor)
-    sorted_indices = sorted(range(len(fitness_scores)), key=lambda i: fitness_scores[i], reverse=True)
+    sorted_indices = sorted(range(len(fitness_scores)), key=lambda i: fitness_scores[i])
 
     # Cria a lista de ranks (1 = melhor, N = pior)
     ranks = list(range(1, len(populacao) + 1))
@@ -230,7 +235,7 @@ def selecao_rank_com_elitismo(population, num_pais, elitismo):
     fitness_scores = [funcao_fitness(ind) for ind in population]
 
     # Obtém os índices que ordenam os indivíduos por fitness (do maior para o menor)
-    sorted_indices = sorted(range(len(fitness_scores)), key=lambda i: fitness_scores[i], reverse=True)
+    sorted_indices = sorted(range(len(fitness_scores)), key=lambda i: fitness_scores[i])
 
     # Seleciona os elites diretamente
     elites = [population[sorted_indices[i]] for i in range(elitismo)]
@@ -291,7 +296,7 @@ def selecao_roleta_com_elitismo(populacao, num_pais, elitismo):
     fitness_scores = [funcao_fitness(ind) for ind in populacao]
 
     # Encontra os índices ordenados por fitness (maior para menor)
-    sorted_indices = sorted(range(len(fitness_scores)), key=lambda i: fitness_scores[i], reverse=True)
+    sorted_indices = sorted(range(len(fitness_scores)), key=lambda i: fitness_scores[i])
 
     # Seleciona os indivíduos elites
     elites = [populacao[sorted_indices[i]] for i in range(elitismo)]
@@ -340,8 +345,8 @@ def algoritmo_genetico(num_generacoes, tam_populacao, espaco_solucao, taxa_mutac
         populacao = [criar_individuo(random.sample(espaco_solucao2, len(espaco_solucao2))) for _ in range(tam_populacao)]
         populacao.sort(key=lambda x: funcao_fitness(x))
         lista_pre.append(funcao_fitness(populacao[0]))
-        copia_individuo = copy.deepcopy(populacao[0])
-        create_window(iniciar_simulacao, copia_individuo)
+        #copia_individuo = copy.deepcopy(populacao[0])
+        #create_window(iniciar_simulacao, copia_individuo)
         for geracao in range(num_generacoes):
             populacao.sort(key=lambda x: funcao_fitness(x))
             melhor_individuo = populacao[0]
@@ -350,7 +355,7 @@ def algoritmo_genetico(num_generacoes, tam_populacao, espaco_solucao, taxa_mutac
             for i in range(elitismo):
                 nova_populacao.append(populacao[i])
             while (len(nova_populacao) < tam_populacao):
-                parente1, parente2 = selecao_torneio(populacao)
+                parente1, parente2 = selecao_rank(populacao, 2)
                 filho1, filho2 = crossover_entrelacado(parente1, parente2, espaco_solucao2)
                 nova_populacao.append(mutacao(filho1, taxa_mutacao))
                 if (len(nova_populacao) < tam_populacao):
@@ -358,7 +363,7 @@ def algoritmo_genetico(num_generacoes, tam_populacao, espaco_solucao, taxa_mutac
             populacao = nova_populacao
 
         melhor_individuo = min(populacao, key=lambda x: funcao_fitness(x))
-        create_window(iniciar_simulacao, melhor_individuo)
+        #create_window(iniciar_simulacao, melhor_individuo)
         lista_pos.append(funcao_fitness(melhor_individuo))
         lista_valor_otimizacao.append(lista_pre[j] - lista_pos[j])
     return melhor_individuo
