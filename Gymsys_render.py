@@ -1,8 +1,4 @@
 import threading
-import tkinter as tk
-from Gymsys_manager import *
-from Gymsys_Ga import *
-
 corner_label_id = None
 
 class VisualSemaphore:
@@ -47,7 +43,7 @@ class VisualSemaphore:
 
 
     def acquire(self, thread_id):
-        if self.semaphore.acquire(timeout=0.05):  # Try to acquire
+        if self.semaphore.acquire():  # Try to acquire
             for i in range(self.max_permits):
                 # Check for an empty circle (white) and turn it blue (in use)
                 if self.canvas.itemcget(self.circles[i], "fill") == "white":
@@ -128,25 +124,7 @@ def update_canvas_size(maquinas, canvas):
 
 def update_corner_label(canvas, variable_value):
     global corner_label_id
-    if corner_label_id is None:
-        # If there's no existing label, create it
-        corner_label_id = canvas.create_text(10, 10, anchor="nw", text=f"Tempo de espera total: ", fill="black", font=("Arial", 12), tags="corner_label")
+    if corner_label_id is None or not canvas.find_withtag("corner_label"):
+        corner_label_id = canvas.create_text(10, 10, anchor="nw", text=f"Tempo de espera total: {variable_value}", fill="black", font=("Arial", 12), tags="corner_label")
     else:
-        # If the label already exists, update its text
         canvas.itemconfig(corner_label_id, text=f"Tempo de espera total: {variable_value}")
-
-
-def create_window(funcao_simulacao, individuo_solucao):
-    global canvas
-    window = tk.Tk()
-    window.title("Academia Gymsys")
-    
-    # Create a canvas for drawing the semaphores
-    canvas = tk.Canvas(window, width=1200, height=400, bg="white")
-    canvas.pack()
-
-    # Start the simulation in a separate thread to not block the Tkinter GUI
-    threading.Thread(target=funcao_simulacao, args=(canvas, individuo_solucao), daemon=True).start()
-
-    # Run the Tkinter event loop
-    window.mainloop()

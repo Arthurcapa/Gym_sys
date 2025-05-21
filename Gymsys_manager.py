@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 qntd_maquinas = [1, 1, 1, 1, 1, 1, 2, 3, 3, 5]
 
